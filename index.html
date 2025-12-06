@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JLPT N2 副詞與擬聲語 考前特訓</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #e67e22;
+            --correct: #27ae60;
+            --wrong: #c0392b;
+            --bg: #f5f6fa;
+        }
+        body {
+            font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Microsoft JhengHei", sans-serif;
+            background-color: var(--bg);
+            color: var(--primary);
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            padding: 30px;
+            position: relative;
+        }
+        h1 { text-align: center; color: var(--primary); font-size: 1.5rem; }
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .question-area { margin-bottom: 25px; }
+        .sentence {
+            font-size: 1.4rem;
+            font-weight: bold;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            background: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 5px solid var(--accent);
+        }
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        @media (max-width: 600px) {
+            .options-grid { grid-template-columns: 1fr; }
+        }
+        .option-btn {
+            padding: 15px;
+            font-size: 1.1rem;
+            border: 2px solid #bdc3c7;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .option-btn:hover { background: #f0f0f0; border-color: var(--primary); }
+        .option-btn.correct { background: #d5f5e3; border-color: var(--correct); color: var(--correct); font-weight: bold; }
+        .option-btn.wrong { background: #fadbd8; border-color: var(--wrong); color: var(--wrong); opacity: 0.7; }
+        
+        .explanation-box {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: #fdfefe;
+            border: 1px solid #dcdcdc;
+            border-radius: 8px;
+        }
+        .explanation-box.show { display: block; animation: fadeIn 0.5s; }
+        .exp-title { font-weight: bold; color: var(--accent); margin-bottom: 10px; }
+        .exp-translation { margin-bottom: 15px; font-weight: bold; color: #34495e; }
+        .exp-detail { font-size: 0.95rem; line-height: 1.6; color: #555; }
+        .next-btn {
+            display: none;
+            width: 100%;
+            padding: 15px;
+            margin-top: 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+        .next-btn:hover { background: #34495e; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Start & End Screen */
+        #start-screen, #end-screen { text-align: center; padding: 40px 0; }
+        .big-btn {
+            padding: 15px 40px;
+            font-size: 1.5rem;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #d35400;
+            margin-top: 20px;
+        }
+        .big-btn:active { transform: translateY(4px); box-shadow: none; }
+        .tag { display: inline-block; background: #eee; padding: 2px 8px; font-size: 0.8rem; border-radius: 4px; margin-right: 5px; color: #666; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="start-screen">
+        <h1>JLPT N2 副詞・擬聲擬態詞<br>考前極限特訓</h1>
+        <p>題庫包含：一般副詞、長音名詞副詞化、以及大量擬聲擬態詞。</p>
+        <p>規則：每回 10 題。答錯的題目會自動洗回題庫，直到完全答對為止。</p>
+        <button class="big-btn" onclick="startGame()">開始特訓</button>
+    </div>
+
+    <div id="quiz-area" style="display: none;">
+        <div class="status-bar">
+            <span id="progress">第 1 / 10 題</span>
+            <span id="remaining">剩餘題庫: 0</span>
+        </div>
+        
+        <div class="question-area">
+            <div class="sentence" id="sentence-display">題目載入中...</div>
+        </div>
+
+        <div class="options-grid" id="options-container">
+            </div>
+
+        <div class="explanation-box" id="explanation">
+            <div class="exp-title">解析</div>
+            <div class="exp-translation" id="translation-text"></div>
+            <div class="exp-detail" id="reason-text"></div>
+        </div>
+
+        <button class="next-btn" id="next-btn" onclick="nextQuestion()">下一題</button>
+    </div>
+
+    <div id="end-screen" style="display: none;">
+        <h1>本回特訓結束！</h1>
+        <p>辛苦了！休息一下，大腦需要時間消化記憶。</p>
+        <div id="result-stats"></div>
+        <button class="big-btn" onclick="location.reload()">再來一回</button>
+    </div>
+</div>
+
+<script>
+    // Database generated based on user request
+    // 包含：名詞類、一般副詞、擬聲擬態詞
+    const fullDb = [
+        // --- Group 1: 大/長 複合詞 (比較像名詞但在此作單字題) ---
+        {
+            word: "大掃除",
+            sentence: "年末なので、家族全員で____を始めた。",
+            options: ["大掃除", "大騒ぎ", "大違い", "大人数"],
+            translation: "因為是年底，所以全家人開始了大掃除。",
+            detail: "「おおそうじ（大掃除）」是年底的大掃除。選項「大騒ぎ」是大騷動，「大違い」是大錯特錯/大相徑庭，「大人数」是很多人。"
+        },
+        {
+            word: "大騒ぎ",
+            sentence: "店の中で客が喧嘩を始めて、____になった。",
+            options: ["大騒ぎ", "大掃除", "大通り", "長電話"],
+            translation: "客人在店裡開始吵架，引起了一陣大騷動。",
+            detail: "「おおさわぎ（大騒ぎ）」指引起騷動、喧鬧。吵架會導致騷動，而不是掃除或長電話。"
+        },
+        {
+            word: "大違い",
+            sentence: "双子だが、性格は____だ。",
+            options: ["大違い", "大掃除", "大騒ぎ", "大げさ"],
+            translation: "雖然是雙胞胎，但個性卻天差地遠。",
+            detail: "「おおちがい（大違い）」指非常不同、大相徑庭。用來比較兩者差距很大。"
+        },
+        {
+            word: "大人数",
+            sentence: "パーティーには____のゲストが参加した。",
+            options: ["大人数", "大掃除", "大通り", "長時間"],
+            translation: "有很多人參加了派對。",
+            detail: "「おおにんずう（大人数）」指很多人數。"
+        },
+        {
+            word: "長旅",
+            sentence: "一週間の____から帰ってきて、とても疲れた。",
+            options: ["長旅", "長距離", "長電話", "長期間"],
+            translation: "從為期一週的長途旅行回來，非常累。",
+            detail: "「ながたび（長旅）」指長途旅行。雖然都是長，但這裡強調的是「旅行」回來的疲勞。"
+        },
+        {
+            word: "長電話",
+            sentence: "母は友達と____をするのが好きだ。",
+            options: ["長電話", "長旅", "長距離", "長時間"],
+            translation: "媽媽喜歡和朋友講很久的電話。",
+            detail: "「ながでんわ（長電話）」指長時間通電話。"
+        },
+        {
+            word: "長距離",
+            sentence: "彼は____トラックの運転手をしている。",
+            options: ["長距離", "長時間", "長期間", "長旅"],
+            translation: "他是長途卡車的司機。",
+            detail: "「ちょうきょり（長距離）」指距離很長。卡車司機通常搭配「長距離」。"
+        },
+        {
+            word: "長期間",
+            sentence: "この工事は____にわたって行われる予定だ。",
+            options: ["長期間", "長時間", "長距離", "長旅"],
+            translation: "這個工程預計將持續很長一段時間。",
+            detail: "「ちょうきかん（長期間）」強調「期間、日子」的長度（如幾個月、幾年）。「長時間」通常指幾個小時。"
+        },
+        {
+            word: "長時間",
+            sentence: "____パソコンを使うと、目が疲れる。",
+            options: ["長時間", "長期間", "長距離", "長旅"],
+            translation: "長時間使用電腦的話，眼睛會疲勞。",
+            detail: "「ちょうじかん（長時間）」指時間（Hours）很長，適合描述動作持續的時間。"
+        },
+
+        // --- Group 2: 一般副詞 (標記：一直忘記, 沒看過, 不會) ---
+        {
+            word: "とうとう",
+            sentence: "長い間待っていたが、彼は____来なかった。",
+            options: ["とうとう", "そろそろ", "だんだん", "ますます"],
+            translation: "等了很久，但他終究沒有來。",
+            detail: "【重點】「とうとう」表示到了最後的結果，常用於壞的結果（終於...還是沒...）。"
+        },
+        {
+            word: "ようやく",
+            sentence: "3年かかって、____N1に合格した。",
+            options: ["ようやく", "とうとう", "あくまで", "しきゅう"],
+            translation: "花了三年，終於合格了N1。",
+            detail: "「ようやく」表示經過長時間努力，終於達成期待的結果（好事）。"
+        },
+        {
+            word: "結局",
+            sentence: "色々議論したが、____何も決まらなかった。",
+            options: ["結局", "至急", "単に", "半ば"],
+            translation: "討論了很久，結果什麼都沒決定。",
+            detail: "「けっきょく（結局）」接在最後，表示結論。"
+        },
+        {
+            word: "思わず",
+            sentence: "痛くて、____大声を出してしまった。",
+            options: ["思わず", "思い切って", "相変わらず", "思いがけず"],
+            translation: "太痛了，不由得叫了一聲。",
+            detail: "「おもわず」指沒有經過思考、下意識地、不由得做出的反應。"
+        },
+        {
+            word: "つい",
+            sentence: "ダイエット中なのに、____甘いものを食べてしまった。",
+            options: ["つい", "ふと", "あくまで", "せいぜい"],
+            translation: "明明在減肥，卻不小心吃了甜食。",
+            detail: "【沒看過重點】「つい」表示「不小心、不知不覺」做了不該做的事，常搭配「てしまった」。"
+        },
+        {
+            word: "ふと",
+            sentence: "窓の外を見ると、____高校時代のことを思い出した。",
+            options: ["ふと", "つい", "単に", "突如"],
+            translation: "看著窗外，突然想起了高中時代的事。",
+            detail: "【沒看過重點】「ふと」指無意識地、偶然地、突然發生的心理活動或動作。"
+        },
+        {
+            word: "とりあえず",
+            sentence: "詳しくは後で話すが、____ビールで乾杯しよう。",
+            options: ["とりあえず", "あくまで", "せいぜい", "まして"],
+            translation: "詳情稍後再說，總之先乾杯喝啤酒吧。",
+            detail: "「とりあえず」指暫且、首先（不管其他的，先做眼前的事）。"
+        },
+        {
+            word: "やむをえず",
+            sentence: "台風のため、旅行は____中止になった。",
+            options: ["やむをえず", "思わず", "あくまで", "単に"],
+            translation: "因為颱風，旅行不得不中止了。",
+            detail: "【沒看過重點】「やむをえず」源自「止むを得ない」，意指「不得已、無可奈何、非自願地」。"
+        },
+        {
+            word: "まして",
+            sentence: "大人の私でも重いのだから、____子供には持てない。",
+            options: ["まして", "あくまで", "せいぜい", "ほんの"],
+            translation: "連身為大人的我都覺得重了，更何況是小孩，絕對拿不動。",
+            detail: "「まして」意為「更何況、更不用說」，常用於後句表示程度更甚。"
+        },
+        {
+            word: "ほんの",
+            sentence: "これは____気持ちですが、どうぞ受け取ってください。",
+            options: ["ほんの", "せいぜい", "もっぱら", "あくまで"],
+            translation: "這只是一點心意，請收下。",
+            detail: "「ほんの」接名詞，表示「僅僅、一點點」。常見用法「ほんの気持ち（一點心意）」。"
+        },
+        {
+            word: "せいぜい",
+            sentence: "参加者は____50人ぐらいだろう。",
+            options: ["せいぜい", "あくまで", "単に", "突如"],
+            translation: "參加者充其量（頂多）也就50人左右吧。",
+            detail: "【不會重點】「せいぜい」表示「極限、充其量、頂多」，通常帶有「不會更多了」的消極語氣。"
+        },
+        {
+            word: "至急",
+            sentence: "この資料を____コピーしてください。",
+            options: ["至急", "結局", "単に", "徐々に"],
+            translation: "請火速（盡快）影印這份資料。",
+            detail: "「しきゅう（至急）」是非常緊急的意思，比「急いで」更正式、急迫。"
+        },
+        {
+            word: "突如",
+            sentence: "____、目の前に黒い猫が現れた。",
+            options: ["突如", "あくまで", "せいぜい", "半ば"],
+            translation: "突然，眼前出現了一隻黑貓。",
+            detail: "【不會重點】「とつじょ（突如）」是「突然（いきなり）」的書面語，表示事情發生得很唐突。"
+        },
+        {
+            word: "単に",
+            sentence: "それは____噂にすぎない。",
+            options: ["単に", "直に", "現に", "特に"],
+            translation: "那只不過是個謠言。",
+            detail: "「たんに（単に）」表示「僅僅、只不過」，常搭配「～にすぎない（只不過是...）」。"
+        },
+        {
+            word: "あくまで",
+            sentence: "会議で彼は____自分の意見を主張した。",
+            options: ["あくまで", "せいぜい", "とりあえず", "思わず"],
+            translation: "在會議上，他徹底地堅持自己的意見。",
+            detail: "「あくまで」表示「徹底、到底」。"
+        },
+        {
+            word: "半ば",
+            sentence: "彼は酒に酔って、____ふざけて言った。",
+            options: ["半ば", "単に", "突如", "至急"],
+            translation: "他喝醉了，半開玩笑地說了。",
+            detail: "【不會重點】「なかば（半ば）」表示「一半」，如「冗談半ば（半開玩笑）」、「人生の半ば（人生過半）」。"
+        },
+
+        // --- Group 3: 今晚加強！擬聲擬態詞 ---
+        {
+            word: "びっしり",
+            sentence: "ノートに漢字が____書いてある。",
+            options: ["びっしり", "どっさり", "ひっそり", "すんなり"],
+            translation: "筆記本上密密麻麻地寫滿了漢字。",
+            detail: "【今晚加強】「びっしり」指「沒有空隙、密密麻麻」的樣子（通常指平面空間）。"
+        },
+        {
+            word: "ぎっしり",
+            sentence: "箱にお菓子が____詰まっている。",
+            options: ["ぎっしり", "びっしり", "ぐちゃぐちゃ", "すれすれ"],
+            translation: "箱子裡塞滿了點心。",
+            detail: "【今晚加強】「ぎっしり」指「塞得滿滿的」樣子（通常指立體容器）。與「びっしり」相似，但更強調裝滿。"
+        },
+        {
+            word: "くっきり",
+            sentence: "今日は天気がいいので、富士山が____見える。",
+            options: ["くっきり", "じっくり", "ぐったり", "きっぱり"],
+            translation: "今天天氣很好，可以清晰地看見富士山。",
+            detail: "【今晚加強】「くっきり」指「輪廓清晰、鮮明」。"
+        },
+        {
+            word: "どっさり",
+            sentence: "田舎から野菜が____届いた。",
+            options: ["どっさり", "びっしり", "すれすれ", "ひっそり"],
+            translation: "鄉下寄來了大量的蔬菜。",
+            detail: "【今晚加強】「どっさり」指「數量非常多、沉甸甸」的樣子。"
+        },
+        {
+            word: "びっしょり",
+            sentence: "夕立にあって、服が____濡れてしまった。",
+            options: ["びっしょり", "しっとり", "きっぱり", "すんなり"],
+            translation: "遇到午後雷陣雨，衣服全濕透了。",
+            detail: "【今晚加強】「びっしょり」指「濕透」的樣子（全身、大量汗水）。"
+        },
+        {
+            word: "ぽかぽか",
+            sentence: "お風呂に入って、体が____した。",
+            options: ["ぽかぽか", "ひんやり", "ジメジメ", "むかむか"],
+            translation: "泡了澡，身體暖呼呼的。",
+            detail: "【今晚加強】「ぽかぽか」指「溫暖、暖和」的樣子。"
+        },
+        {
+            word: "ひんやり",
+            sentence: "朝の空気は____している。",
+            options: ["ひんやり", "ぽかぽか", "ずっしり", "ぼんやり"],
+            translation: "早晨的空氣涼颼颼的。",
+            detail: "【今晚加強】「ひんやり」指「涼、冷冽」的感覺（稍微有點冷但舒服或清醒）。"
+        },
+        {
+            word: "しっとり",
+            sentence: "この化粧水を使うと、肌が____する。",
+            options: ["しっとり", "びっしょり", "きっぱり", "ぐちゃぐちゃ"],
+            translation: "用了這個化妝水，肌膚變得很滋潤。",
+            detail: "【今晚加強】「しっとり」指「濕潤、滋潤、優雅沉靜」。"
+        },
+        {
+            word: "ジメジメ",
+            sentence: "梅雨の時期は____して嫌だ。",
+            options: ["ジメジメ", "ぽかぽか", "いきいき", "ひっそり"],
+            translation: "梅雨季節潮濕黏膩，真討厭。",
+            detail: "【今晚加強】「ジメジメ」指「潮濕、陰鬱」的不快感。"
+        },
+        {
+            word: "ずっしり",
+            sentence: "このカバンは中身が入っていて、____重い。",
+            options: ["ずっしり", "びっしょり", "すっきり", "ぐったり"],
+            translation: "這包包裡裝了東西，沉甸甸的。",
+            detail: "【今晚加強】「ずっしり」指「沉重、有份量」的感覺。"
+        },
+        {
+            word: "ひっそり",
+            sentence: "放課後の教室は____していた。",
+            options: ["ひっそり", "すっきり", "きっぱり", "びっしり"],
+            translation: "放學後的教室靜悄悄的。",
+            detail: "【今晚加強】「ひっそり」指「寂靜、悄悄地、無人聲」。"
+        },
+        {
+            word: "ぐちゃぐちゃ",
+            sentence: "カバンの中が____になっている。",
+            options: ["ぐちゃぐちゃ", "めちゃくちゃ", "びっしり", "ぎっしり"],
+            translation: "包包裡面亂七八糟的。",
+            detail: "【今晚加強】「ぐちゃぐちゃ」指「凌亂、爛成一團（含水分或形狀崩壞）」。"
+        },
+        {
+            word: "めちゃくちゃ",
+            sentence: "彼の話は論理が____だ。",
+            options: ["めちゃくちゃ", "ぐちゃぐちゃ", "ひやひや", "くたくた"],
+            translation: "他說的話邏輯亂七八糟（毫無道理）。",
+            detail: "【今晚加強】「めちゃくちゃ」指「程度過甚、毫無道理、亂七八糟（抽象概念多）」。"
+        },
+        {
+            word: "すれすれ",
+            sentence: "鳥が水面____を飛んでいる。",
+            options: ["すれすれ", "ずばり", "すんなり", "きっぱり"],
+            translation: "鳥貼著水面（差點碰到）飛翔。",
+            detail: "【今晚加強】「すれすれ」指「幾乎要碰到、勉強通過的邊緣」。"
+        },
+        {
+            word: "ほやほや",
+            sentence: "パン屋で焼きたて____のパンを買った。",
+            options: ["ほやほや", "ほかほか", "そろそろ", "ふわふわ"],
+            translation: "在麵包店買了剛烤好熱騰騰的麵包。",
+            detail: "【今晚加強】「ほやほや」指「剛...好的（熱騰騰、新鮮）」，如「新婚ほやほや（新婚燕爾）」。"
+        },
+        {
+            word: "さっさと",
+            sentence: "文句を言わずに、____仕事を片付けなさい。",
+            options: ["さっさと", "せっせと", "ざっと", "じっくり"],
+            translation: "別抱怨了，趕快把工作做完。",
+            detail: "【今晚加強】「さっさと」指「趕快、迅速地（帶有不耐煩或催促的語氣）」。"
+        },
+        {
+            word: "テキパキ",
+            sentence: "彼女は仕事を____こなしている。",
+            options: ["テキパキ", "キビキビ", "コツコツ", "ハキハキ"],
+            translation: "她俐落地處理著工作。",
+            detail: "【今晚加強】「テキパキ」指「手腳俐落、辦事有效率」。"
+        },
+        {
+            word: "コツコツ",
+            sentence: "彼は毎日____勉強を続けている。",
+            options: ["コツコツ", "しみじみ", "つくづく", "のろのろ"],
+            translation: "他每天孜孜不倦地持續學習。",
+            detail: "【今晚加強】「コツコツ」指「孜孜不倦、腳踏實地」或「敲擊聲」。"
+        },
+        {
+            word: "じっくり",
+            sentence: "慌てずに、____考えてから答えなさい。",
+            options: ["じっくり", "ざっと", "きっぱり", "すっきり"],
+            translation: "不要慌張，仔細考慮後再回答。",
+            detail: "【今晚加強】「じっくり」指「慢慢地、仔細地（花時間）」。"
+        },
+        {
+            word: "つくづく",
+            sentence: "自分の力が足りないことを____感じた。",
+            options: ["つくづく", "いよいよ", "せいぜい", "くれぐれも"],
+            translation: "深切地感受到了自己的力量不足。",
+            detail: "【今晚加強】「つくづく」指「深切地、痛切地（常用於負面或感慨）」。"
+        },
+        {
+            word: "ざっと",
+            sentence: "書類に____目を通しておいてください。",
+            options: ["ざっと", "じっくり", "きっぱり", "ずっと"],
+            translation: "請大略地過目一下文件。",
+            detail: "【今晚加強】「ざっと」指「粗略地、大致地」或「一口氣（下雨/流水）」。"
+        },
+        {
+            word: "ずばり",
+            sentence: "彼の性格を一言で言うと、____「真面目」だ。",
+            options: ["ずばり", "つまり", "やはり", "いきなり"],
+            translation: "用一句話形容他的個性，那就是「認真」。",
+            detail: "【今晚加強】「ずばり」指「一針見血、直截了當」。"
+        },
+        {
+            word: "すんなり",
+            sentence: "反対されると思ったが、案は____通った。",
+            options: ["すんなり", "きっぱり", "はっきり", "あっさり"],
+            translation: "原本以為會被反對，但提案順利地通過了。",
+            detail: "【今晚加強】「すんなり」指「順利地、沒遇到阻礙」。"
+        },
+        {
+            word: "おっとり",
+            sentence: "彼女は____していて、細かいことは気にしない。",
+            options: ["おっとり", "うっとり", "きっぱり", "がっくり"],
+            translation: "她個性穩重大方，不在意瑣碎的事。",
+            detail: "【今晚加強】「おっとり」指「穩重、大方、慢條斯理（正面含義）」。"
+        },
+        {
+            word: "いきいき",
+            sentence: "子供たちは____と遊んでいる。",
+            options: ["いきいき", "のろのろ", "うろうろ", "ぶつぶつ"],
+            translation: "孩子們生氣勃勃地玩耍著。",
+            detail: "【今晚加強】「いきいき（生き生き）」指「生氣勃勃、充滿活力」。"
+        },
+        {
+            word: "きびきび",
+            sentence: "彼は動作が____していて、見ていて気持ちがいい。",
+            options: ["きびきび", "テキパキ", "のろのろ", "ぶらぶら"],
+            translation: "他動作俐落敏捷，看了很舒服。",
+            detail: "【今晚加強】「きびきび」指「動作敏捷、不拖泥帶水」。"
+        },
+        {
+            word: "むかむか",
+            sentence: "飲みすぎて、胃が____する。",
+            options: ["むかむか", "ムキムキ", "イライラ", "ハラハラ"],
+            translation: "喝太多了，胃覺得噁心。",
+            detail: "【今晚加強】「むかむか」指「噁心想吐」或「火大生氣」。"
+        },
+        {
+            word: "きっぱり",
+            sentence: "嫌なことは____断ったほうがいい。",
+            options: ["きっぱり", "すっきり", "はっきり", "さっぱり"],
+            translation: "討厭的事情最好斷然拒絕。",
+            detail: "【今晚加強】「きっぱり」指「斷然、乾脆、斬釘截鐵」。"
+        },
+        {
+            word: "そわそわ",
+            sentence: "合格発表の日、彼は朝から____していた。",
+            options: ["そわそわ", "イライラ", "ドキドキ", "ワクワク"],
+            translation: "放榜當天，他從早上就坐立難安。",
+            detail: "【今晚加強】「そわそわ」指「心神不寧、坐立難安（通常因為期待或緊張）」。"
+        },
+        {
+            word: "くよくよ",
+            sentence: "失敗したことをいつまでも____するな。",
+            options: ["くよくよ", "シクシク", "ブツブツ", "イライラ"],
+            translation: "別一直為了失敗的事在那裡悶悶不樂（想不開）。",
+            detail: "【今晚加強】「くよくよ」指「垂頭喪氣、想不開、鑽牛角尖」。"
+        },
+        {
+            word: "にやにや",
+            sentence: "何を思い出しているのか、彼は一人で____している。",
+            options: ["にやにや", "ニコニコ", "ゲラゲラ", "ニタニタ"],
+            translation: "不知想起了什麼，他一個人不懷好意地（或傻傻地）笑著。",
+            detail: "【今晚加強】「にやにや」指「嗤笑、竊笑、令人不舒服的笑」。"
+        },
+        {
+            word: "ひやひや",
+            sentence: "子供が木に登っているのを見て、____した。",
+            options: ["ひやひや", "ハラハラ", "ドキドキ", "ブルブル"],
+            translation: "看到小孩爬樹，讓人提心吊膽。",
+            detail: "【今晚加強】「ひやひや」指「提心吊膽（覺得危險而感到寒意）」。"
+        },
+        {
+            word: "ぐったり",
+            sentence: "熱が出て、ベッドで____している。",
+            options: ["ぐったり", "くたくた", "ごロゴロ", "うとうと"],
+            translation: "發燒了，在床上癱軟無力。",
+            detail: "【今晚加強】「ぐったり」指「精疲力盡到癱軟（生病或極度勞累）」。"
+        },
+        {
+            word: "くたくた",
+            sentence: "一日中歩いて、もう____だ。",
+            options: ["くたくた", "ぐったり", "ふわふわ", "カラカラ"],
+            translation: "走了一整天，已經筋疲力盡了。",
+            detail: "【今晚加強】「くたくた」指「累壞了（形體鬆散、沒力氣）」。"
+        },
+        {
+            word: "へとへと",
+            sentence: "残業続きで、体も心も____だ。",
+            options: ["へとへと", "くたくた", "ボロボロ", "ギリギリ"],
+            translation: "連續加班，身心俱疲。",
+            detail: "【今晚加強】「へとへと」指「累得動彈不得、一點力氣都沒有」。"
+        }
+    ];
+
+    let currentRoundQuestions = [];
+    let currentQuestionIndex = 0;
+    let wrongAnswerQueue = [];
+    let isRoundFinished = false;
+
+    // Helper: Shuffle Array
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    function startGame() {
+        document.getElementById('start-screen').style.display = 'none';
+        document.getElementById('end-screen').style.display = 'none';
+        document.getElementById('quiz-area').style.display = 'block';
+        
+        // Pick 10 random questions from fullDb + any previous wrong ones? 
+        // Logic: Just shuffle fullDb and take first 10 for a "Round"
+        // But user wants "wrong ones return to pool". 
+        // Simplified Logic: 
+        // 1. If queue is empty, take 10 random from FullDb.
+        // 2. If queue has items, prioritize them, fill rest from FullDb.
+        
+        let pool = [];
+        if (wrongAnswerQueue.length > 0) {
+            pool = [...wrongAnswerQueue];
+            wrongAnswerQueue = []; // Clear queue to be refilled if wrong again
+            // Fill up to 10 if needed
+            if (pool.length < 10) {
+                let fresh = shuffle([...fullDb]).filter(q => !pool.includes(q));
+                pool = pool.concat(fresh.slice(0, 10 - pool.length));
+            }
+        } else {
+            pool = shuffle([...fullDb]).slice(0, 10);
+        }
+        
+        currentRoundQuestions = shuffle(pool);
+        currentQuestionIndex = 0;
+        isRoundFinished = false;
+        
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        if (currentQuestionIndex >= currentRoundQuestions.length) {
+            finishRound();
+            return;
+        }
+
+        const q = currentRoundQuestions[currentQuestionIndex];
+        
+        // Update UI
+        document.getElementById('progress').innerText = `第 ${currentQuestionIndex + 1} / ${currentRoundQuestions.length} 題`;
+        document.getElementById('remaining').innerText = `本回錯題累積: ${wrongAnswerQueue.length}`;
+        document.getElementById('sentence-display').innerText = q.sentence;
+        
+        // Reset Explanation
+        document.getElementById('explanation').className = 'explanation-box';
+        document.getElementById('next-btn').style.display = 'none';
+
+        // Options
+        const container = document.getElementById('options-container');
+        container.innerHTML = '';
+        
+        // Shuffle options for display
+        let displayOptions = shuffle([...q.options]);
+        
+        displayOptions.forEach(opt => {
+            let btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = opt;
+            btn.onclick = () => checkAnswer(btn, opt, q);
+            container.appendChild(btn);
+        });
+    }
+
+    function checkAnswer(btn, selected, questionData) {
+        // Disable all buttons
+        const allBtns = document.querySelectorAll('.option-btn');
+        allBtns.forEach(b => b.disabled = true);
+
+        const isCorrect = selected === questionData.word;
+
+        if (isCorrect) {
+            btn.classList.add('correct');
+        } else {
+            btn.classList.add('wrong');
+            // Highlight correct one
+            allBtns.forEach(b => {
+                if (b.innerText === questionData.word) b.classList.add('correct');
+            });
+            // Add to wrong queue for next round
+            wrongAnswerQueue.push(questionData);
+        }
+
+        // Show Explanation
+        document.getElementById('translation-text').innerText = questionData.translation;
+        document.getElementById('reason-text').innerText = questionData.detail;
+        document.getElementById('explanation').className = 'explanation-box show';
+        document.getElementById('next-btn').style.display = 'block';
+    }
+
+    function nextQuestion() {
+        currentQuestionIndex++;
+        loadQuestion();
+    }
+
+    function finishRound() {
+        document.getElementById('quiz-area').style.display = 'none';
+        document.getElementById('end-screen').style.display = 'block';
+        
+        const resultDiv = document.getElementById('result-stats');
+        if (wrongAnswerQueue.length === 0) {
+            resultDiv.innerHTML = `<h2 style="color:var(--correct)">太棒了！本回全對！</h2><p>可以挑戰下一回，或休息一下。</p>`;
+        } else {
+            resultDiv.innerHTML = `<h2 style="color:var(--wrong)">本回有 ${wrongAnswerQueue.length} 題需要複習</h2><p>點擊「再來一回」將優先出現這些錯題。</p>`;
+        }
+    }
+
+</script>
+
+</body>
+</html>
